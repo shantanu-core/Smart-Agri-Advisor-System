@@ -11,6 +11,7 @@ app.use(express.json());
 // ── MongoDB Atlas connection ────────────────────────────────────────────────
 let mongoConnected = false;
 const inMemoryHistory = []; // Fallback when MongoDB is unavailable
+const inMemorySensor = []; // Fallback for sensor data
 
 mongoose
   .connect(process.env.MONGODB_URI)
@@ -60,8 +61,18 @@ const Sensor = mongoose.model("Sensor", sensorSchema);
 // POST sensor data from ESP32
 app.post("/api/sensor", async (req, res) => {
   try {
-    const entry = new Sensor(req.body);
-    await entry.save();
+    if (mongoConnected) {
+      const entry = new Sensor(req.body);
+      await entry.save();
+      return res.status(201).json(entry);
+    }
+    // In-memory fallback
+    const entry = {
+      _id: "mem_sensor_" + Date.now() + "_" + Math.random().toString(36).slice(2),
+      ...req.body,
+      createdAt: new Date(),
+    };
+    inMemorySensor.push(entry);
     res.status(201).json(entry);
   } catch (err) {
     res.status(500).json({ error: "Failed to save sensor data" });
@@ -71,8 +82,14 @@ app.post("/api/sensor", async (req, res) => {
 // GET latest sensor reading (for dashboard polling)
 app.get("/api/sensor/latest", async (req, res) => {
   try {
-    const latest = await Sensor.findOne().sort({ createdAt: -1 });
-    if (!latest) return res.status(404).json({ error: "No sensor data yet" });
+    if (mongoConnected) {
+      const latest = await Sensor.findOne().sort({ createdAt: -1 });
+      if (!latest) return res.status(404).json({ error: "No sensor data yet" });
+      return res.json(latest);
+    }
+    // In-memory fallback
+    if (inMemorySensor.length === 0) return res.status(404).json({ error: "No sensor data yet" });
+    const latest = inMemorySensor[inMemorySensor.length - 1];
     res.json(latest);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch sensor data" });
@@ -157,9 +174,10 @@ app.get("*", (req, res) => {
 
 // ── Start server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running → http://localhost:${PORT}`);
   console.log(`🌐 Open app      → http://localhost:${PORT}/main.html`);
+  console.log(`📡 Network access → http://YOUR_LOCAL_IP:${PORT}`);
 });
 
 server.on("error", (err) => {

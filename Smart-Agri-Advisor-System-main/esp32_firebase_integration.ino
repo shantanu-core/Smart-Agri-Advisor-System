@@ -9,11 +9,11 @@
 
 // ── Backend Server ────────────────────────────────────────────────────────────
 // Option A: Same WiFi network → use laptop's IPv4 (run ipconfig to find it)
-// #define SERVER_URL "http://10.252.47.161:3000/api/sensor"
+// #define SERVER_URL "http://YOUR_LOCAL_IP:3000/api/sensor"
 // Option B: Windows Mobile Hotspot → laptop IP is always 192.168.137.1
 // #define SERVER_URL "http://192.168.137.1:3000/api/sensor"
 // Option C: Active network IP
-#define SERVER_URL "http://192.168.43.161:3000/api/sensor"
+#define SERVER_URL "http://YOUR_LOCAL_IP:3000/api/sensor"
 
 // ── Sensor Pins ───────────────────────────────────────────────────────────────
 #define DHTPIN 4      // DHT11 data pin → GPIO 4

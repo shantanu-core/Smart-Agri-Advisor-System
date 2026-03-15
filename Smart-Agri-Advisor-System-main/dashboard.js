@@ -1,6 +1,6 @@
 // Real-time sensor monitoring and suggestions
 // Get your FREE Groq API key at: https://console.groq.com
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY; // From .env
 
 // If no new reading arrives within this many ms, sensor is considered offline
 const SENSOR_TIMEOUT_MS = 15000; // 15 seconds (ESP32 sends every 5s)
