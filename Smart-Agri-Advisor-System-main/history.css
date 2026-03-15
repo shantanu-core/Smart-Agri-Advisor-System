@@ -1,0 +1,159 @@
+/* =========================
+   HISTORY PAGE
+   ========================= */
+
+#history {
+    padding: 40px 60px;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #ffffff;
+}
+
+#history h1 {
+    font-size: 32px;
+    color: #b9ffb3;
+    margin: 0;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.history-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.clear-btn {
+    padding: 10px 20px;
+    background: #ff4c4c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.clear-btn:hover {
+    background: #ff1a1a;
+    transform: translateY(-2px);
+}
+
+.secondary-btn {
+    background: #f39c12;
+}
+
+.secondary-btn:hover {
+    background: #e67e22;
+}
+
+.active-mode {
+    background: #7f8c8d;
+    color: #ffffff;
+}
+
+.active-mode:hover {
+    background: #95a5a6;
+}
+
+/* Checkboxes */
+#history input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #8bc34a;
+}
+
+/* Container for the table to provide a translucent background */
+#history .dataset-page {
+    background: rgba(0, 0, 0, 0.45);
+    padding: 30px;
+    border-radius: 14px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    margin-top: 20px;
+}
+
+/* Table Container */
+#history .table-container {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 400px;
+    /* Set a fixed height for vertical scrolling */
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Table Styles */
+#history table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+    /* Ensure it scrolls on small screens */
+}
+
+/* Make header sticky so it stays visible while scrolling */
+#history th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #203a43;
+    /* Solid sticky background to hide rows sliding under it */
+    color: #b9ffb3;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+}
+
+/* Table Cells */
+#history td {
+    padding: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+    /* More prominent divider */
+    color: #e8ffe8;
+    font-size: 14px;
+}
+
+/* Specific Columns Styling */
+#history th:nth-child(10),
+/* Time Column */
+#history td.time-col {
+    white-space: normal;
+    min-width: 100px;
+    max-width: 120px;
+    font-size: 13px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+#history th:nth-child(11),
+/* Prediction Column */
+#history td.prediction-col {
+    min-width: 350px;
+    line-height: 1.5;
+}
+
+/* Zebra Striping for better readability */
+#history tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Hover Effect on Rows */
+#history tbody tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 0.3s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #history {
+        padding: 30px 20px;
+    }
+}

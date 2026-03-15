@@ -1,0 +1,77 @@
+/* =========================
+   DATASET SECTION s
+   ========================= */
+
+#dataset {
+  padding: 40px 60px;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Card wrapper */
+#dataset .dataset-page {
+  background: rgba(255, 255, 255, 0.92); /* opaque card */
+  border-radius: 18px;
+  padding: 25px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+/* Title */
+#dataset h1 {
+  margin-bottom: 18px;
+  color: #2f855a;
+  font-size: 28px;
+}
+
+/* Table container */
+#dataset .table-container {
+  height: calc(100vh - 220px);
+  overflow: auto;
+  border-radius: 12px;
+}
+
+/* Table */
+#dataset table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+/* Sticky header */
+#dataset thead th {
+  position: sticky;
+  top: 0;
+  background: #2f855a;
+  color: white;
+  padding: 12px;
+  font-size: 14px;
+  text-align: left;
+  z-index: 5;
+}
+
+/* Cells */
+#dataset tbody td {
+  padding: 10px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #e6e6e6;
+  color: #333;
+}
+
+/* Hover */
+#dataset tbody tr:hover {
+  background: #f1faf4;
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 900px) {
+  #dataset {
+    padding: 30px 20px;
+  }
+
+  #dataset .table-container {
+    height: calc(100vh - 260px);
+  }
+}

@@ -1,0 +1,160 @@
+/* =========================
+   AI ADVISORY PAGE
+   ========================= */
+
+#advisory {
+  padding: 40px 60px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #ffffff;
+}
+
+/* Page heading */
+#advisory h1 {
+  font-size: 32px;
+  margin-bottom: 30px;
+  color: #b9ffb3;
+}
+
+/* =========================
+   LAYOUT
+   ========================= */
+
+.advisory-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+/* LEFT SIDE (FORM) */
+.advisory-form {
+  flex: 1;
+}
+
+/* Advisory form */
+#advisory form {
+  background: rgba(0, 0, 0, 0.45);
+  padding: 30px;
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Labels */
+#advisory label {
+  display: block;
+  margin-top: 14px;
+  font-size: 14px;
+  color: #d8ffd8;
+}
+
+/* Inputs */
+#advisory input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 14px;
+}
+
+/* Input focus */
+#advisory input:focus {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Predict button */
+#advisory button {
+  margin-top: 22px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4caf50, #8bc34a);
+  color: #0b2b12;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#advisory button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+/* =========================
+   RESULT BOX (RIGHT SIDE)
+   ========================= */
+
+#advisory .result-box {
+  flex: 1;
+  padding: 22px;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.55);
+  border-left: 6px solid #8bc34a;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+/* Result title */
+#advisory .result-box h3 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #b9ffb3;
+}
+
+/* Result text */
+#advisory .result-box p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #e8ffe8;
+}
+
+/* Crop highlight */
+#advisory .result-box .crop {
+  font-weight: 700;
+  color: #7cff00;
+  font-size: 16px;
+}
+
+/* Note */
+#advisory .result-box .note {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #ffe082;
+}
+
+/* =========================
+   ANIMATION
+   ========================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   RESPONSIVE
+   ========================= */
+
+@media (max-width: 900px) {
+  .advisory-layout {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  #advisory {
+    padding: 30px 20px;
+  }
+}
