@@ -1,5 +1,8 @@
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, ".env") });
+// Only load .env in development, not on Railway (production)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config({ path: path.join(__dirname, ".env") });
+}
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
