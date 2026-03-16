@@ -28,7 +28,7 @@ app.post("/api/ai/chat", async (req, res) => {
     }
 
     const postData = JSON.stringify({
-      model: model || "llama-3.1-8b-instant",
+      model: model || "llama3-8b-8192",
       messages: [{ role: "user", content: prompt }],
       max_tokens: max_tokens || 700,
       temperature: temperature || 0.7
@@ -41,7 +41,7 @@ app.post("/api/ai/chat", async (req, res) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Length': postData.length
+        'Content-Length': Buffer.byteLength(postData)
       },
       timeout: 30000 // 30 second timeout
     };
