@@ -20,14 +20,12 @@ function initializeSensorListener() {
   fetchLatestSensor();
   setInterval(fetchLatestSensor, 5000);
 }
-// API base — safe fallback if history.js hasn't defined it yet
-if (typeof API_BASE === "undefined") {
-  var API_BASE = window.location.origin;
-}
+// API base — uses global API_BASE from history.js or defaults to current origin
+const DASHBOARD_API_BASE = (typeof API_BASE !== "undefined") ? API_BASE : window.location.origin;
 
 async function fetchLatestSensor() {
   try {
-    const res = await fetch(`${API_BASE}/api/sensor/latest`);
+    const res = await fetch(`${DASHBOARD_API_BASE}/api/sensor/latest`);
     if (!res.ok) {
       setSensorOffline("No sensor data yet");
       return;
@@ -130,7 +128,7 @@ Keep response concise (3-4 bullet points), farmer-friendly language.`;
 
   try {
     // Call our internal backend proxy instead of Groq directly
-    const response = await fetch(`${API_BASE}/api/ai/chat`, {
+    const response = await fetch(`${DASHBOARD_API_BASE}/api/ai/chat`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
