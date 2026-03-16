@@ -8,31 +8,61 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const https = require("https");
 // ── AI Proxy (Groq) ────────────────────────────────────────────────────────
 app.post("/api/ai/chat", async (req, res) => {
   try {
     const { prompt, model, max_tokens, temperature } = req.body;
     
-    // We use the builtin fetch if Node version is 18+, otherwise we'd need node-fetch
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: model || "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: max_tokens || 700,
-        temperature: temperature || 0.7
-      })
+    if (!process.env.GROQ_API_KEY) {
+      console.error("❌ GROQ_API_KEY is missing in environment variables!");
+      return res.status(500).json({ error: "Server Configuration Error: API Key missing." });
+    }
+
+    const postData = JSON.stringify({
+      model: model || "llama-3.3-70b-versatile",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: max_tokens || 700,
+      temperature: temperature || 0.7
     });
 
-    const data = await response.json();
-    res.json(data);
+    const options = {
+      hostname: 'api.groq.com',
+      path: '/openai/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Length': postData.length
+      },
+      timeout: 30000 // 30 second timeout
+    };
+
+    const groqReq = https.request(options, (groqRes) => {
+      let data = '';
+      groqRes.on('data', (chunk) => { data += chunk; });
+      groqRes.on('end', () => {
+        try {
+          const parsedData = JSON.parse(data);
+          res.status(groqRes.statusCode).json(parsedData);
+        } catch (e) {
+          console.error("Failed to parse Groq response:", data);
+          res.status(500).json({ error: "Invalid response from AI engine" });
+        }
+      });
+    });
+
+    groqReq.on('error', (err) => {
+      console.error("Groq Request Error:", err);
+      res.status(500).json({ error: "Failed to connect to AI engine" });
+    });
+
+    groqReq.write(postData);
+    groqReq.end();
+
   } catch (err) {
-    console.error("AI Proxy Error:", err);
-    res.status(500).json({ error: "Failed to connect to AI engine" });
+    console.error("AI Proxy Internal Error:", err);
+    res.status(500).json({ error: "Internal Server Error during AI processing" });
   }
 });
 

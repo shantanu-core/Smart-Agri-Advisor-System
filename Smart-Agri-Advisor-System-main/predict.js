@@ -68,6 +68,17 @@ Keep it concise, practical, and farmer-friendly.`;
             })
         });
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorMsg = `Server Error (${response.status})`;
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMsg = errorJson.error || errorJson.message || errorMsg;
+            } catch (e) {}
+            cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ ${errorMsg}</span>`;
+            return;
+        }
+
         const data = await response.json();
 
         if (data.choices && data.choices.length > 0) {
@@ -83,7 +94,8 @@ Keep it concise, practical, and farmer-friendly.`;
                 });
             }
         } else if (data.error) {
-            cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ AI Engine Error: ${data.error.message || data.error}</span>`;
+            const msg = data.error.message || JSON.stringify(data.error);
+            cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ AI Engine: ${msg}</span>`;
             console.error("AI Proxy error:", data.error);
         } else {
             cropResult.innerHTML = '<span style="color:#d9534f;">⚠️ No response from AI. Please try again.</span>';
@@ -91,6 +103,6 @@ Keep it concise, practical, and farmer-friendly.`;
 
     } catch (error) {
         console.error("Error generating advice:", error);
-        cropResult.innerHTML = '<span style="color:#d9534f;">⚠️ Network error. Check your server connection and try again.</span>';
+        cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ Network connection failed. Please check if your server is online and try again. (${error.message})</span>`;
     }
 });
