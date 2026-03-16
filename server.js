@@ -6,10 +6,72 @@ if (process.env.NODE_ENV !== "production") {
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const https = require("https");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// ── Health Check ───────────────────────────────────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", version: "2.1.2", mongo: mongoConnected });
+});
+
+// ── AI Proxy (Groq) ────────────────────────────────────────────────────────
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    const { prompt, model, max_tokens, temperature } = req.body;
+    
+    if (!process.env.GROQ_API_KEY) {
+      console.error("❌ GROQ_API_KEY is missing in environment variables!");
+      return res.status(500).json({ error: "Server Configuration Error: API Key missing." });
+    }
+
+    const postData = JSON.stringify({
+      model: model || "llama-3.1-8b-instant",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: max_tokens || 700,
+      temperature: temperature || 0.7
+    });
+
+    const options = {
+      hostname: 'api.groq.com',
+      path: '/openai/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Length': postData.length
+      },
+      timeout: 30000 // 30 second timeout
+    };
+
+    const groqReq = https.request(options, (groqRes) => {
+      let data = '';
+      groqRes.on('data', (chunk) => { data += chunk; });
+      groqRes.on('end', () => {
+        try {
+          const parsedData = JSON.parse(data);
+          res.status(groqRes.statusCode).json(parsedData);
+        } catch (e) {
+          console.error("Failed to parse Groq response:", data);
+          res.status(500).json({ error: "Invalid response from AI engine" });
+        }
+      });
+    });
+
+    groqReq.on('error', (err) => {
+      console.error("Groq Request Error:", err);
+      res.status(500).json({ error: "Failed to connect to AI engine" });
+    });
+
+    groqReq.write(postData);
+    groqReq.end();
+  } catch (err) {
+    console.error("AI Proxy Internal Error:", err);
+    res.status(500).json({ error: "Internal Server Error during AI processing" });
+  }
+});
 
 // ── MongoDB Atlas connection ────────────────────────────────────────────────
 let mongoConnected = false;
@@ -25,7 +87,6 @@ mongoose
   .catch((err) => {
     mongoConnected = false;
     console.error("❌ MongoDB connection error:", err.message);
-    console.error("   → Using in-memory history (Request History will work; data resets when server restarts)");
   });
 
 // ── Schema & Model ──────────────────────────────────────────────────────────
@@ -44,10 +105,8 @@ const historySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 const History = mongoose.model("History", historySchema);
 
-// ── Sensor Schema & Model ────────────────────────────────────────────────────
 const sensorSchema = new mongoose.Schema(
   {
     temperature: Number,
@@ -56,7 +115,6 @@ const sensorSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
 const Sensor = mongoose.model("Sensor", sensorSchema);
 
 // ── Routes ──────────────────────────────────────────────────────────────────
@@ -69,7 +127,6 @@ app.post("/api/sensor", async (req, res) => {
       await entry.save();
       return res.status(201).json(entry);
     }
-    // In-memory fallback
     const entry = {
       _id: "mem_sensor_" + Date.now() + "_" + Math.random().toString(36).slice(2),
       ...req.body,
@@ -82,7 +139,7 @@ app.post("/api/sensor", async (req, res) => {
   }
 });
 
-// GET latest sensor reading (for dashboard polling)
+// GET latest sensor reading
 app.get("/api/sensor/latest", async (req, res) => {
   try {
     if (mongoConnected) {
@@ -90,7 +147,6 @@ app.get("/api/sensor/latest", async (req, res) => {
       if (!latest) return res.status(404).json({ error: "No sensor data yet" });
       return res.json(latest);
     }
-    // In-memory fallback
     if (inMemorySensor.length === 0) return res.status(404).json({ error: "No sensor data yet" });
     const latest = inMemorySensor[inMemorySensor.length - 1];
     res.json(latest);
@@ -99,14 +155,13 @@ app.get("/api/sensor/latest", async (req, res) => {
   }
 });
 
-// GET all history entries (newest first)
+// GET all history entries
 app.get("/api/history", async (req, res) => {
   try {
     if (mongoConnected) {
       const entries = await History.find().sort({ createdAt: -1 });
       return res.json(entries);
     }
-    // In-memory fallback: newest first
     const sorted = [...inMemoryHistory].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
     res.json(sorted);
   } catch (err) {
@@ -122,7 +177,6 @@ app.post("/api/history", async (req, res) => {
       await entry.save();
       return res.status(201).json(entry);
     }
-    // In-memory fallback
     const entry = {
       _id: "mem_" + Date.now() + "_" + Math.random().toString(36).slice(2),
       ...req.body,
@@ -135,7 +189,7 @@ app.post("/api/history", async (req, res) => {
   }
 });
 
-// DELETE a single history entry by MongoDB _id
+// DELETE history entries
 app.delete("/api/history/:id", async (req, res) => {
   try {
     if (mongoConnected) {
@@ -143,7 +197,6 @@ app.delete("/api/history/:id", async (req, res) => {
       if (!deleted) return res.status(404).json({ error: "Entry not found" });
       return res.json({ message: "Entry deleted" });
     }
-    // In-memory fallback
     const idx = inMemoryHistory.findIndex((e) => e._id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Entry not found" });
     inMemoryHistory.splice(idx, 1);
@@ -153,7 +206,6 @@ app.delete("/api/history/:id", async (req, res) => {
   }
 });
 
-// DELETE all history entries
 app.delete("/api/history", async (req, res) => {
   try {
     if (mongoConnected) {
@@ -168,27 +220,17 @@ app.delete("/api/history", async (req, res) => {
 });
 
 // ── Serve frontend static files ───────────────────────────────────────────────
-app.use(express.static(path.join(__dirname, "Smart-Agri-Advisor-System-main")));
+// We serve from the subfolder where the actual files are located
+const frontendPath = path.join(__dirname, "Smart-Agri-Advisor-System-main");
+app.use(express.static(frontendPath));
 
-// Fallback: serve main.html for any unknown routes
+// Fallback: serve main.html
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "Smart-Agri-Advisor-System-main", "main.html"));
+  res.sendFile(path.join(frontendPath, "main.html"));
 });
 
 // ── Start server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running → http://localhost:${PORT}`);
-  console.log(`🌐 Open app      → http://localhost:${PORT}/main.html`);
-  console.log(`📡 Network access → http://YOUR_LOCAL_IP:${PORT}`);
-});
-
-server.on("error", (err) => {
-  if (err.code === "EADDRINUSE") {
-    console.log(`\n⚠️  Port ${PORT} is already in use — server is already running.`);
-    console.log(`🌐 Open app → http://localhost:${PORT}/main.html\n`);
-    process.exit(0);
-  } else {
-    throw err;
-  }
 });
