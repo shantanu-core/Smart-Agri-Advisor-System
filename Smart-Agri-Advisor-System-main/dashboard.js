@@ -146,7 +146,8 @@ Keep response concise (3-4 bullet points), farmer-friendly language.`;
       container.innerHTML = `<p>${suggestion.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
       container.classList.remove("loading");
     } else if (result.error) {
-      container.innerHTML = `<p style="color:#d9534f;">⚠️ ${result.error.message || result.error}</p>`;
+      const errorMsg = (result.error && typeof result.error === 'object') ? (result.error.message || JSON.stringify(result.error)) : result.error;
+      container.innerHTML = `<p style="color:#d9534f;">⚠️ ${errorMsg}</p>`;
     } else {
       container.innerHTML = '<p style="color: #999;">Unable to generate suggestions. Try again.</p>';
     }

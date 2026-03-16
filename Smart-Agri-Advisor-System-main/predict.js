@@ -76,7 +76,11 @@ Keep it concise, practical, and farmer-friendly.`;
             let errorMsg = `Server Error (${response.status})`;
             try {
                 const errorJson = JSON.parse(errorText);
-                errorMsg = errorJson.error || errorJson.message || errorMsg;
+                if (errorJson.error && typeof errorJson.error === 'object') {
+                    errorMsg = errorJson.error.message || JSON.stringify(errorJson.error);
+                } else {
+                    errorMsg = errorJson.error || errorJson.message || errorMsg;
+                }
             } catch (e) {}
             cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ ${errorMsg}</span>`;
             return;
