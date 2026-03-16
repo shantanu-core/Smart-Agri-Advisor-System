@@ -28,7 +28,7 @@ app.post("/api/ai/chat", async (req, res) => {
     }
 
     const postData = JSON.stringify({
-      model: model || "llama3-8b-8192",
+      model: model || "llama-3.3-70b-specdec",
       messages: [{ role: "user", content: prompt }],
       max_tokens: max_tokens || 700,
       temperature: temperature || 0.7
