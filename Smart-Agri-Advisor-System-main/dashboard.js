@@ -159,10 +159,9 @@ Keep response concise (3-4 bullet points), farmer-friendly language.`;
   }
 }
 
-// Initialize when page loads
-document.addEventListener("DOMContentLoaded", initializeSensorListener);
-
-// Also initialize if Firebase loads after this script
-if (document.readyState === 'loading') {
-  document.addEventListener('firebase-ready', waitForFirebaseAndInit);
-}
+// Initialize when page loads or immediately if already loaded
+if (document.readyState === "complete" || document.readyState === "interactive") {
+  initializeSensorListener();
+} else {
+  document.addEventListener("DOMContentLoaded", initializeSensorListener);
+}
