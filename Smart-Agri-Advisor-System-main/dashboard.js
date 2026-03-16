@@ -3,7 +3,7 @@
 const GROQ_API_KEY = "SECRET_HANDLED_BY_BACKEND";
 
 // If no new reading arrives within this many ms, sensor is considered offline
-const SENSOR_TIMEOUT_MS = 30000; // 30 seconds (ESP32 sends every 5s)
+const SENSOR_TIMEOUT_MS = 60000; // 60 seconds (ESP32 sends every 10s)
 // Minimum time between AI suggestion regenerations (ms)
 const SUGGESTION_COOLDOWN_MS = 60000; // 1 minute
 
