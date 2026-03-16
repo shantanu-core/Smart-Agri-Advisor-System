@@ -9,6 +9,12 @@ app.use(cors());
 app.use(express.json());
 
 const https = require("https");
+
+// ── Health Check ───────────────────────────────────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", version: "2.1.0", mongo: mongoConnected });
+});
+
 // ── AI Proxy (Groq) ────────────────────────────────────────────────────────
 app.post("/api/ai/chat", async (req, res) => {
   try {
@@ -20,7 +26,7 @@ app.post("/api/ai/chat", async (req, res) => {
     }
 
     const postData = JSON.stringify({
-      model: model || "llama-3.3-70b-versatile",
+      model: model || "llama-3.1-8b-instant",
       messages: [{ role: "user", content: prompt }],
       max_tokens: max_tokens || 700,
       temperature: temperature || 0.7

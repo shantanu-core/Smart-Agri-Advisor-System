@@ -56,8 +56,11 @@ Please provide:
 
 Keep it concise, practical, and farmer-friendly.`;
 
+    // Use a safe fallback for API_BASE
+    const PREDICT_API_BASE = (typeof API_BASE !== "undefined") ? API_BASE : window.location.origin;
+
     try {
-        const response = await fetch(`${API_BASE}/api/ai/chat`, {
+        const response = await fetch(`${PREDICT_API_BASE}/api/ai/chat`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
