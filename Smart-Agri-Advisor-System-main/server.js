@@ -8,6 +8,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ── AI Proxy (Groq) ────────────────────────────────────────────────────────
+app.post("/api/ai/chat", async (req, res) => {
+  try {
+    const { prompt, model, max_tokens, temperature } = req.body;
+    
+    // We use the builtin fetch if Node version is 18+, otherwise we'd need node-fetch
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: model || "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: max_tokens || 700,
+        temperature: temperature || 0.7
+      })
+    });
+
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    console.error("AI Proxy Error:", err);
+    res.status(500).json({ error: "Failed to connect to AI engine" });
+  }
+});
+
 // ── MongoDB Atlas connection ────────────────────────────────────────────────
 let mongoConnected = false;
 const inMemoryHistory = []; // Fallback when MongoDB is unavailable

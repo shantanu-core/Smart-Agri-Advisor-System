@@ -1,19 +1,22 @@
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <DHT.h>
 
 // ── WiFi Credentials ─────────────────────────────────────────────────────────
-#define WIFI_SSID     "YOUR_WIFI_NAME"       // e.g. "prathmesh"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"   // e.g. "asdfghjkl"
+#define WIFI_SSID     "Vy33s"
+#define WIFI_PASSWORD "8983665660"
 
 // ── Backend Server ────────────────────────────────────────────────────────────
-// Option A: Same WiFi network → use laptop's IPv4 (run ipconfig to find it)
+// Option A: Local development (same WiFi network)
 // #define SERVER_URL "http://YOUR_LOCAL_IP:3000/api/sensor"
-// Option B: Windows Mobile Hotspot → laptop IP is always 192.168.137.1
+// Option B: Windows Mobile Hotspot
 // #define SERVER_URL "http://192.168.137.1:3000/api/sensor"
-// Option C: Active network IP
-#define SERVER_URL "http://YOUR_LOCAL_IP:3000/api/sensor"
+// Option C: Railway deployment (PRODUCTION) - HTTPS
+#define SERVER_URL "https://smart-agri-advisor-system-production.up.railway.app/api/sensor"
+// Option D: Test with HTTP (uncomment below line to test)
+// #define SERVER_URL "http://smart-agri-advisor-system-production.up.railway.app/api/sensor"
 
 // ── Sensor Pins ───────────────────────────────────────────────────────────────
 #define DHTPIN 4      // DHT11 data pin → GPIO 4
@@ -79,15 +82,64 @@ void readAndSend() {
 
   // POST to Node.js backend → MongoDB Atlas
   HTTPClient http;
-  http.begin(SERVER_URL);
+
+  // Check if URL is HTTPS or HTTP
+  if (String(SERVER_URL).startsWith("https://")) {
+    WiFiClientSecure client;
+    Serial.println("Attempting SSL connection to Railway...");
+    // Try proper SSL certificate verification first
+    client.setCACert(nullptr); // Use system root certificates
+    client.setTimeout(10000);
+
+    if (client.connect("smart-agri-advisor-system-production.up.railway.app", 443)) {
+      Serial.println("✓ SSL certificate verification successful");
+      http.begin(client, SERVER_URL);
+    } else {
+      Serial.println("⚠ SSL certificate verification failed, using insecure mode");
+      client.setInsecure();
+      if (client.connect("smart-agri-advisor-system-production.up.railway.app", 443)) {
+        Serial.println("✓ Connected with insecure SSL mode");
+        http.begin(client, SERVER_URL);
+      } else {
+        Serial.println("✗ SSL connection failed completely");
+        return;
+      }
+    }
+    Serial.println("Using HTTPS connection with SSL");
+  } else {
+    WiFiClient client;
+    http.begin(client, SERVER_URL);
+    Serial.println("Using HTTP connection");
+  }
+
   http.addHeader("Content-Type", "application/json");
+  http.setTimeout(10000); // 10 second timeout
+
+  Serial.print("Sending payload: ");
+  Serial.println(payload);
 
   int httpCode = http.POST(payload);
 
-  if (httpCode == 201) {
-    Serial.println("✓ Sent to MongoDB via backend");
+  Serial.print("HTTP Response Code: ");
+  Serial.println(httpCode);
+
+  if (httpCode > 0) {
+    String response = http.getString();
+    Serial.print("Server Response: ");
+    Serial.println(response);
+
+    if (httpCode == 201) {
+      Serial.println("✓ Successfully sent to Railway!");
+    } else {
+      Serial.printf("⚠ Unexpected response code: %d\n", httpCode);
+    }
   } else {
-    Serial.printf("✗ POST failed. HTTP code: %d\n", httpCode);
+    Serial.printf("✗ POST failed. Error: %d\n", httpCode);
+    Serial.println("Possible causes:");
+    Serial.println("- Network connectivity");
+    Serial.println("- SSL certificate issues");
+    Serial.println("- Railway server down");
+    Serial.println("- DNS resolution failure");
   }
 
   http.end();

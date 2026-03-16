@@ -34,11 +34,6 @@ document.getElementById("predictBtn").addEventListener("click", async () => {
         return;
     }
 
-    if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROQ_API_KEY_HERE") {
-        cropResult.innerHTML = '<span style="color:#d9534f;">⚠️ Groq API key not configured. Get a free key at <a href="https://console.groq.com" target="_blank">console.groq.com</a> and add it to dashboard.js</span>';
-        return;
-    }
-
     cropResult.innerHTML = '<em style="color:#68d391;">🤖 Analyzing your soil and environment data...</em>';
 
     const prompt = `Act as an expert agricultural advisor. Given the following real-time soil and environment parameters, provide clear and actionable recommendations:
@@ -62,17 +57,14 @@ Please provide:
 Keep it concise, practical, and farmer-friendly.`;
 
     try {
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        const response = await fetch(`${API_BASE}/api/ai/chat`, {
             method: "POST",
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${GROQ_API_KEY}`
+                "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
-                messages: [{ role: "user", content: prompt }],
-                max_tokens: 700,
-                temperature: 0.7
+                prompt: prompt,
+                max_tokens: 700
             })
         });
 
@@ -91,15 +83,14 @@ Keep it concise, practical, and farmer-friendly.`;
                 });
             }
         } else if (data.error) {
-            cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ API Error: ${data.error.message}</span>`;
-            console.error("Groq API error:", data.error);
+            cropResult.innerHTML = `<span style="color:#d9534f;">⚠️ AI Engine Error: ${data.error.message || data.error}</span>`;
+            console.error("AI Proxy error:", data.error);
         } else {
             cropResult.innerHTML = '<span style="color:#d9534f;">⚠️ No response from AI. Please try again.</span>';
-            console.error("Unexpected response:", data);
         }
 
     } catch (error) {
         console.error("Error generating advice:", error);
-        cropResult.innerHTML = '<span style="color:#d9534f;">⚠️ Network error. Check your internet connection and try again.</span>';
+        cropResult.innerHTML = '<span style="color:#d9534f;">⚠️ Network error. Check your server connection and try again.</span>';
     }
 });

@@ -1,9 +1,9 @@
 // Real-time sensor monitoring and suggestions
-// Get your FREE Groq API key at: https://console.groq.com
-const GROQ_API_KEY = process.env.GROQ_API_KEY; // From .env
+// NOTE: This file runs in the browser — API keys are now handled securely by the backend proxy.
+const GROQ_API_KEY = "SECRET_HANDLED_BY_BACKEND";
 
 // If no new reading arrives within this many ms, sensor is considered offline
-const SENSOR_TIMEOUT_MS = 15000; // 15 seconds (ESP32 sends every 5s)
+const SENSOR_TIMEOUT_MS = 30000; // 30 seconds (ESP32 sends every 5s)
 // Minimum time between AI suggestion regenerations (ms)
 const SUGGESTION_COOLDOWN_MS = 60000; // 1 minute
 
@@ -19,6 +19,10 @@ let sensorConnected = false;
 function initializeSensorListener() {
   fetchLatestSensor();
   setInterval(fetchLatestSensor, 5000);
+}
+// API base — safe fallback if history.js hasn't defined it yet
+if (typeof API_BASE === "undefined") {
+  var API_BASE = window.location.origin;
 }
 
 async function fetchLatestSensor() {
@@ -95,7 +99,7 @@ function updateSensorStatus(status, state) {
                             : "#999";
 }
 
-// Generate real-time suggestions using Groq API
+// Generate real-time suggestions using Server-side AI Proxy
 async function generateRealtimeSuggestions() {
   const container = document.getElementById("suggestionsContainer");
 
@@ -109,11 +113,6 @@ async function generateRealtimeSuggestions() {
   container.innerHTML = '<p style="text-align: center; color: #999;">🤖 Analyzing sensor data...</p>';
   container.classList.add("loading");
   
-  if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROQ_API_KEY_HERE") {
-    container.innerHTML = '<p style="color: #d9534f; text-align: center;"><strong>⚠️ Groq API Key Missing</strong><br>Get a free key at <a href="https://console.groq.com" target="_blank" style="color:#68d391;">console.groq.com</a> and add it to dashboard.js</p>';
-    return;
-  }
-
   // Build prompt with current sensor data
   const prompt = `You are an expert agricultural advisor. Based on the following real-time sensor readings from a farm, provide SHORT and specific crop recommendations and immediate care instructions.
 
@@ -130,17 +129,15 @@ Provide:
 Keep response concise (3-4 bullet points), farmer-friendly language.`;
 
   try {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    // Call our internal backend proxy instead of Groq directly
+    const response = await fetch(`${API_BASE}/api/ai/chat`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${GROQ_API_KEY}`
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 300,
-        temperature: 0.7
+        prompt: prompt,
+        max_tokens: 300
       })
     });
 
@@ -151,13 +148,13 @@ Keep response concise (3-4 bullet points), farmer-friendly language.`;
       container.innerHTML = `<p>${suggestion.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`;
       container.classList.remove("loading");
     } else if (result.error) {
-      container.innerHTML = `<p style="color:#d9534f;">⚠️ ${result.error.message}</p>`;
+      container.innerHTML = `<p style="color:#d9534f;">⚠️ ${result.error.message || result.error}</p>`;
     } else {
       container.innerHTML = '<p style="color: #999;">Unable to generate suggestions. Try again.</p>';
     }
 
   } catch (error) {
-    console.error("Groq API Error:", error);
+    console.error("AI Error:", error);
     container.innerHTML = '<p style="color: #d9534f;">Error generating suggestions. Check connection.</p>';
   }
 }
